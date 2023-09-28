@@ -1,0 +1,204 @@
+-- Create a new database called 'Project2'
+-- Connect to the 'master' database to run this snippet
+USE master
+GO
+-- Create the new database if it does not exist already
+IF NOT EXISTS (
+    SELECT [name]
+        FROM sys.databases
+        WHERE [name] = N'FraudDetection'
+)
+CREATE DATABASE FraudDetection
+GO
+--Sum of total crime in the U.S for both 2020 and 2021 
+SELECT 
+    SUM(totalcrime_loss) AS totalLosses
+FROM 
+    FraudDetection..FraudDetection
+
+
+--Sum of TotalCrime losses for 2020
+Select 
+    SUM(totalcrime_loss) AS totallosses2020
+FROM 
+    FraudDetection..FraudDetection
+Where year = '2020'; 
+
+
+--Sum of TotalCrime losses for 2021
+Select 
+    SUM(totalcrime_loss) AS totalLosses2021
+FROM FraudDetection..FraudDetection
+WHERE Year = '2021'; 
+
+
+-- Total SUM of fraud for each category for both years. 
+SELECT
+    SUM(Bec_loss) AS Total_Bec_loss,
+    SUM(Romance_loss) AS Total_Romance_loss,
+    SUM(Creditcard_loss) AS Total_Creditcard_loss,
+    SUM(Databreach_loss) AS Total_Databreach_loss,
+    SUM(GovtImp_loss) AS Total_GovtImp_loss
+FROM 
+    Frauddetection..frauddetection
+WHERE year = '2020' --Change to 2020 to switch between both years
+
+
+-- Calculate percentage of fraud types compared to total loss 
+SELECT
+    SUM(totalcrime_loss) as totalloss,
+    (SUM(Bec_loss) * 1.0 / SUM(totalcrime_loss)) AS Total_Bec_lossper,
+    (SUM(Romance_loss) * 1.0 / SUM(totalcrime_loss)) AS Total_Romance_lossper,
+    (SUM(Creditcard_loss) * 1.0 / SUM(totalcrime_loss)) AS Total_Creditcard_lossper,
+    (SUM(Databreach_loss) * 1.0 / SUM(totalcrime_loss)) AS Total_Databreach_lossper,
+    (SUM(GovtImp_loss) * 1.0 / SUM(totalcrime_loss)) AS Total_GovtImp_lossper
+FROM 
+    Frauddetection..frauddetection
+--WHERE year = '2021' or '2020'; to calculate for each year 
+
+
+--Population, total crime count, per state
+SELECT 
+    State, 
+    Year, 
+    Population,
+    totalcrime_count,
+    age_20_count,
+    age_29_count,
+    age_39_count,
+    age_49_count, 
+    age_59_count,
+    age_60_count
+From Frauddetection..frauddetection
+order by Year, State
+
+
+-- Avg loss per category 
+SELECT 
+    AVG(bec_loss) AS avg_bec_loss,
+    AVG(romance_loss) AS avg_romance_loss,
+    AVG(creditcard_loss) AS avg_creditcard_loss,
+    AVG(databreach_loss) AS avg_databreach_loss,
+    AVG(Govtimp_loss) AS avg_Govtimp_loss
+FROM Frauddetection..frauddetection
+
+
+-- Count of fraud per age group 
+SELECT 
+    State, 
+    Population,
+    age_20_count,
+    age_29_count,
+    age_39_count,
+    age_49_count,
+    age_59_count,
+    age_60_count
+FROM Frauddetection..frauddetection
+
+
+-- Max loss for each category for both years 
+SELECT 
+    Year,
+    MAX(bec_loss) AS max_bec_loss,
+    MAX(romance_loss) AS max_romance_loss,
+    MAX(creditcard_loss) AS max_creditcard_loss,
+    MAX(databreach_loss) AS max_databreach_loss,
+    MAX(Govtimp_loss) AS max_Govtimp_loss
+FROM Frauddetection..frauddetection
+GROUP BY Year
+
+
+-- Top 5 states with highest losses in 2020
+SELECT TOP 5
+    State,
+    SUM(totalcrime_loss) AS total_loss
+FROM
+    Frauddetection..frauddetection
+WHERE
+    Year = 2020
+GROUP BY
+    State
+ORDER BY
+    total_loss DESC;
+
+-- Top 5 states with lowest losses in 2020
+SELECT TOP 5
+    State,
+    SUM(totalcrime_loss) AS total_loss
+FROM
+    Frauddetection..frauddetection
+WHERE
+    Year = 2020
+GROUP BY
+    State
+ORDER BY
+    total_loss ASC;
+
+SELECT TOP 5
+    State,
+    SUM(totalcrime_loss) AS total_loss
+FROM
+    Frauddetection..frauddetection
+WHERE
+    Year = 2021
+GROUP BY
+    State
+ORDER BY
+    total_loss DESC;
+
+
+-- Top 5 states with lowest losses in 2021
+SELECT TOP 5
+    State,
+    SUM(totalcrime_loss) AS total_loss
+FROM
+    Frauddetection..frauddetection
+WHERE
+    Year = 2021
+GROUP BY
+    State
+ORDER BY
+    total_loss ASC;    
+
+
+-- need to fix code. 
+SELECT
+    Year,
+    age_group,
+    SUM(CASE WHEN fraud_type = 'BEC' THEN losses ELSE 0 END) AS BEC_losses,
+    SUM(CASE WHEN fraud_type = 'Romance' THEN losses ELSE 0 END) AS Romance_losses,
+    SUM(CASE WHEN fraud_type = 'CreditCard' THEN losses ELSE 0 END) AS CreditCard_losses
+FROM
+    (
+        SELECT Year, '20-29' AS age_group, 'BEC' AS fraud_type, age_20_loss AS losses FROM Frauddetection..frauddetection
+        UNION ALL
+        SELECT Year, '20-29', 'Romance', age_20_loss FROM Frauddetection..frauddetection
+        UNION ALL
+        SELECT Year, '20-29', 'CreditCard', age_20_loss FROM Frauddetection..frauddetection
+        UNION ALL
+        SELECT Year, '30-39', 'BEC', age_29_loss FROM Frauddetection..frauddetection
+        UNION ALL
+        SELECT Year, '30-39', 'Romance', age_29_loss FROM Frauddetection..frauddetection
+        UNION ALL
+        SELECT Year, '30-39', 'CreditCard', age_29_loss FROM Frauddetection..frauddetection
+        -- Repeat this pattern for other age groups and fraud types
+    ) AS subquery
+GROUP BY Year, age_group
+ORDER BY Year, age_group;
+
+  
+
+
+-- Table for visualization 
+SELECT
+    State,
+    Year,
+    population,
+    SUM(totalcrime_count) AS total_crime_count,
+    SUM(totalcrime_loss) AS total_crime_losses
+FROM
+    Frauddetection..frauddetection
+GROUP BY
+    Year, State, Population
+ORDER BY
+    Year;
